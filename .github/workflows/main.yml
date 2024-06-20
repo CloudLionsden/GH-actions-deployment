@@ -1,0 +1,64 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Snyk Security Scan
+        uses: snyk/actions@v3
+        with:
+          args: test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy to AWS
+        run: |
+          # Add your deployment script here
+          echo "Deploying application..."
+
+      - name: Run Burp Suite Security Tests
+        run: |
+          # Run Burp Suite security tests
+          docker pull portswigger/burp-suite-enterprise-edition
+          docker run --rm -v $(pwd):/workspace portswigger/burp-suite-enterprise-edition --config-file=/workspace/burp-config.json
+        env:
+          BURP_LICENSE: ${{ secrets.BURP_LICENSE }}
